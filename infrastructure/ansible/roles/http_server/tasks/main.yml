@@ -18,7 +18,6 @@
 - name: deploy jar file
   when: using_latest
   become: true
-  register: deploy_jar_file
   copy:
     src: "{{ http_server_jar }}"
     dest: "{{ http_server_home_folder }}/bin/{{ http_server_jar }}"
@@ -29,7 +28,6 @@
 - name: download zip file if not using latest
   when: not using_latest
   become: true
-  register: deploy_jar_file
   get_url:
     url: "{{ http_server_zip_download }}"
     dest: "{{ http_server_home_folder }}/triplea-http-server-{{ version }}.zip"
@@ -57,7 +55,6 @@
 
 - name: deploy server config file
   become: true
-  register: deploy_config_file
   template:
     src: configuration.yml.j2
     dest: "{{ http_server_home_folder}}/configuration.yml"
@@ -67,26 +64,27 @@
 
 - name: install systemd service script
   become: true
+  register: service_script
   template:
     src: http_server.service.j2
     dest: /lib/systemd/system/http_server.service
     mode: "644"
 
-- name: reload systemd
+- name: reload systemd if service script changed
+  when: service_script.changed
   become: true
   systemd:
     daemon_reload: yes
 
-- name: enable and start service
-  when: (deploy_jar_file.changed == false) and (deploy_config_file.changed == false)
+- name: enable and ensure service is started
   become: true
   service:
     name: http_server
     state: started
     enabled: yes
 
-- name: restart service if new jar file deployed
-  when: (deploy_jar_file.changed) or (deploy_config_file.changed)
+- name: restart service in CI environments that use the latest code
+  when: using_latest 
   become: true
   service:
     name: http_server
