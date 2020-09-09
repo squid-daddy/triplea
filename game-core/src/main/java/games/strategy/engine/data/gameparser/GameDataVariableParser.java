@@ -1,31 +1,28 @@
 package games.strategy.engine.data.gameparser;
 
-import games.strategy.engine.data.GameParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.w3c.dom.Element;
+import org.triplea.map.data.elements.Game;
+import org.triplea.map.data.elements.VariableList.Variable;
 
 class GameDataVariableParser {
 
-  private final NodeFinder nodeFinder = new NodeFinder();
-
-  Map<String, List<String>> parseVariables(final Element root) throws GameParseException {
-    final Element variableList = nodeFinder.getOptionalSingleChild("variableList", root);
-    return variableList != null ? parseVariableElement(variableList) : Map.of();
+  Map<String, List<String>> parseVariables(final Game game) {
+    return game.getVariableList() != null ? parseVariableElement(game) : Map.of();
   }
 
-  private Map<String, List<String>> parseVariableElement(final Element root) {
+  private Map<String, List<String>> parseVariableElement(final Game game) {
     final Map<String, List<String>> variables = new HashMap<>();
-    for (final Element current : nodeFinder.getChildren("variable", root)) {
-      final String name = "$" + current.getAttribute("name") + "$";
+    for (final Variable variable : game.getVariableList().getVariables()) {
       final List<String> values =
-          nodeFinder.getChildren("element", current).stream()
-              .map(element -> element.getAttribute("name"))
+          variable.getElements().stream()
+              .map(Variable.Element::getName)
               .flatMap(value -> findNestedVariables(value, variables))
               .collect(Collectors.toList());
+      final String name = "$" + variable.getName() + "$";
       variables.put(name, values);
     }
     return variables;

@@ -10,11 +10,11 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.w3c.dom.Element;
+import org.triplea.generic.xml.reader.XmlMapper;
+import org.triplea.map.data.elements.Game;
 
 class GameDataVariableParserTest {
 
@@ -28,25 +28,24 @@ class GameDataVariableParserTest {
 
   @Test
   void emptyList() throws Exception {
-    final Element xmlSample = readFile(EMPTY_LIST);
+    final Game xmlSample = readFile(EMPTY_LIST);
 
     final Map<String, List<String>> result = parser.parseVariables(xmlSample);
 
     assertThat(result.keySet(), empty());
   }
 
-  private static Element readFile(final String fileName) throws Exception {
+  private static Game readFile(final String fileName) throws Exception {
     final File file = new File(fileName);
     checkState(file.isFile());
 
     final InputStream inputStream = new DataInputStream(new FileInputStream(file));
-
-    return XmlReader.parseDom(fileName, inputStream, new ArrayList<>());
+    return new XmlMapper(inputStream).mapXmlToObject(Game.class);
   }
 
   @Test
   void singleElementList() throws Exception {
-    final Element xmlSample = readFile(SINGLE_ELEMENT_LIST);
+    final Game xmlSample = readFile(SINGLE_ELEMENT_LIST);
 
     final Map<String, List<String>> result = parser.parseVariables(xmlSample);
 
@@ -56,7 +55,7 @@ class GameDataVariableParserTest {
 
   @Test
   void manyElementList() throws Exception {
-    final Element xmlSample = readFile(MANY_ELEMENT_LIST);
+    final Game xmlSample = readFile(MANY_ELEMENT_LIST);
 
     final Map<String, List<String>> result = parser.parseVariables(xmlSample);
 
@@ -69,7 +68,7 @@ class GameDataVariableParserTest {
 
   @Test
   void nestedVariable() throws Exception {
-    final Element xmlSample = readFile(NESTED_VARIABLE);
+    final Game xmlSample = readFile(NESTED_VARIABLE);
 
     final Map<String, List<String>> result = parser.parseVariables(xmlSample);
 
