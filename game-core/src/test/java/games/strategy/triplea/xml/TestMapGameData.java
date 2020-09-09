@@ -68,10 +68,12 @@ public enum TestMapGameData {
     try (InputStream is =
         new FileInputStream(Paths.get("src", "test", "resources", fileName).toFile())) {
 
-      return new GameParser( "game name",
-          new XmlGameElementMapper(
-              Map.of("TestDelegate", TestDelegate::new),
-              Map.of("TestAttachment", TestAttachment::new))).parse(is);
+      return new GameParser(
+              "game name",
+              new XmlGameElementMapper(
+                  Map.of("TestDelegate", TestDelegate::new),
+                  Map.of("TestAttachment", TestAttachment::new)))
+          .parse(is);
 
     } catch (final Exception e) {
       // Rethrow as RuntimeException as this is not expected to happen, to simplify test code

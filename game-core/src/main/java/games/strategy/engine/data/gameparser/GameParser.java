@@ -55,7 +55,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -92,16 +91,11 @@ public final class GameParser {
   private final GameDataVariableParser variableParser = new GameDataVariableParser();
 
   @VisibleForTesting
-  public GameParser(
-      final String mapName,
-      final XmlGameElementMapper xmlGameElementMapper) {
+  public GameParser(final String mapName, final XmlGameElementMapper xmlGameElementMapper) {
     data = new GameData();
     this.mapName = mapName;
     this.xmlGameElementMapper = xmlGameElementMapper;
   }
-
-
-
 
   /**
    * Performs a deep parse of the game definition contained in the specified stream.
@@ -113,8 +107,7 @@ public final class GameParser {
         mapUri,
         inputStream -> {
           try {
-            return new GameParser(mapUri.toString(), new XmlGameElementMapper())
-                .parse(inputStream);
+            return new GameParser(mapUri.toString(), new XmlGameElementMapper()).parse(inputStream);
           } catch (final EngineVersionException e) {
             log.log(Level.WARNING, "Game engine not compatible with: " + mapUri, e);
             return null;
@@ -138,8 +131,6 @@ public final class GameParser {
 
     return new GameParser(mapName, xmlGameElementMapper).parse(stream);
   }
-
-
 
   @Nonnull
   private GameData parse(final InputStream stream)
