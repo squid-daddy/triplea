@@ -6,6 +6,8 @@ jobs:
     services:
       postgres:
         image: postgres
+        ports: 
+          - 5432:5432
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK 11
