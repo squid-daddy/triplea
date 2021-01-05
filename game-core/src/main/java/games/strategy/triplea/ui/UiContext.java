@@ -1,6 +1,5 @@
 package games.strategy.triplea.ui;
 
-import games.strategy.engine.ClientFileSystemHelper;
 import games.strategy.engine.data.GameData;
 import games.strategy.engine.data.GamePlayer;
 import games.strategy.engine.data.GameState;
@@ -43,6 +42,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.triplea.io.FileUtils;
+import org.triplea.io.ZipFileUtil;
 import org.triplea.java.concurrency.CountDownLatchHandler;
 import org.triplea.sound.ClipPlayer;
 
@@ -92,11 +92,11 @@ public class UiContext {
     resourceLoader = new ResourceLoader(getDefaultMapDir(gameData));
   }
 
-  protected void internalSetMapDir(final String dir, final GameData data) {
+  protected void internalSetMapDir(final String dir, final String mapSkinDir, final GameData data) {
     if (resourceLoader != null) {
       resourceLoader.close();
     }
-    resourceLoader = new ResourceLoader(dir);
+    resourceLoader = new ResourceLoader(dir, mapSkinDir);
     mapData = new MapData(dir);
     // DiceImageFactory needs loader and game data
     diceImageFactory = new DiceImageFactory(resourceLoader, data.getDiceSides());
@@ -278,16 +278,16 @@ public class UiContext {
   }
 
   public void setDefaultMapDir(final GameData data) {
-    internalSetMapDir(getDefaultMapDir(data), data);
+    internalSetMapDir(getDefaultMapDir(data), null, data);
   }
 
-  public void setMapDir(final GameData data, final String mapDir) {
-    internalSetMapDir(mapDir, data);
+  public void setMapDir(final GameData data, final String skinDir) {
+    internalSetMapDir(mapDir, skinDir, data);
     this.getMapData().verify(data);
     // set the default after internal succeeds, if an error is thrown we don't want to persist it
     final String mapName = (String) data.getProperties().get(Constants.MAP_NAME);
     final Preferences prefs = getPreferencesForMap(mapName);
-    prefs.put(MAP_SKIN_PREF, mapDir);
+    prefs.put(MAP_SKIN_PREF, skinDir);
     try {
       prefs.flush();
     } catch (final BackingStoreException e) {
@@ -395,16 +395,35 @@ public class UiContext {
   }
 
   /** returns the map skins for the game data. returns is a map of display-name -> map directory */
-  public static Map<String, String> getSkins(final String mapName) {
+  public static Map<String, String> getSkins(final String mapDir) {
     final Map<String, String> skinsByDisplayName = new LinkedHashMap<>();
-    skinsByDisplayName.put("Original", mapName);
-    for (final File f : FileUtils.listFiles(ClientFileSystemHelper.getUserMapsFolder())) {
-      if (mapSkinNameMatchesMapName(f.getName(), mapName)) {
-        final String displayName =
-            f.getName().replace(mapName + "-", "").replace("-master", "").replace(".zip", "");
-        skinsByDisplayName.put(displayName, f.getName());
-      }
-    }
+    skinsByDisplayName.put("Original", mapDir);
+
+    ResourceLoader.getMapLocationByMapName(mapDir)
+        .ifPresent(
+            mapPath -> {
+              if (mapPath.isDirectory()) {
+                final File skinsFolder = mapPath.toPath().resolve("skins").toFile();
+                if (skinsFolder.exists()) {
+                  for (final File skinFolder : FileUtils.listFiles(skinsFolder)) {
+                    final File skinNameFile = new File(skinFolder, "name.txt");
+                    if (skinNameFile.exists()) {
+                      skinsByDisplayName.put(skinFolder.getName(), skinFolder.getName());
+                    }
+                  }
+                }
+              } else if(mapPath.getName().endsWith(".zip")){
+                ZipFileUtil.findXmlFilesInZip()
+              }
+            });
+
+    //    for (final File f : FileUtils.listFiles(ClientFileSystemHelper.getUserMapsFolder())) {
+    //      if (mapSkinNameMatchesMapName(f.getName(), mapName)) {
+    //        final String displayName =
+    //            f.getName().replace(mapName + "-", "").replace("-master", "").replace(".zip", "");
+    //        skinsByDisplayName.put(displayName, f.getName());
+    //      }
+    //    }
     return skinsByDisplayName;
   }
 

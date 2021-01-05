@@ -18,6 +18,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
@@ -56,6 +59,9 @@ public class ResourceLoader implements Closeable {
 
                   return new MapNotFoundException(mapName);
                 });
+    if (skinName != null) {
+      mapLocation = mapLocation.toPath().resolve("skins").resolve(skinName).toFile();
+    }
 
     // Add the assets folder from the game installation path. This assets folder supplements
     // any map resources.
