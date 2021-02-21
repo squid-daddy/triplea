@@ -9,12 +9,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 import org.triplea.http.client.HttpClient;
 
 /**
  * Accumulates required args for making requests to create github issues, and then presents an API
  * to accept user upload data.
  */
+@Slf4j
 public class GithubApiClient {
 
   /** If this client is set to 'test' mode, we will return a stubbed response. */
@@ -76,7 +78,11 @@ public class GithubApiClient {
 
   private Collection<URI> listRepositories(final String githubOrg, final int pageNumber) {
     final Map<String, Object> tokens = new HashMap<>();
-    tokens.put("Authorization", "token " + authToken);
+    if (!authToken.isBlank()) {
+      tokens.put("Authorization", "token " + authToken);
+    } else {
+      log.info("Github auth token is blank - using unauthenticated access to github API.");
+    }
     final Map<String, String> queryParams = new HashMap<>();
     queryParams.put("per_page", "100");
     queryParams.put("page", String.valueOf(pageNumber));
